@@ -2,9 +2,18 @@ import { AnimatePresence, motion } from 'motion/react'
 import { useEffect, useState, useRef } from 'react'
 import { AlertTriangle, X, Check } from './icons'
 import { cn } from './utils'
-import { EnvCheckAction, EnvCheckResult } from './types'
+import { EnvCheckResult, VariableGroup } from './types'
+import { checkEnvironmentVariables } from './actions'
 
-export const SetupToolbar = ({ envCheckAction }: { envCheckAction: EnvCheckAction }) => {
+export const SetupToolbar = ({
+  title,
+  description,
+  envs: requiredEnvs,
+}: {
+  title: string
+  description: string
+  envs: VariableGroup
+}) => {
   const [open, setOpen] = useState(false)
   const [formState, setFormState] = useState('idle')
   const [envs, setEnvs] = useState<EnvCheckResult[]>([])
@@ -38,12 +47,10 @@ export const SetupToolbar = ({ envCheckAction }: { envCheckAction: EnvCheckActio
   }, [open, formState])
 
   useEffect(() => {
-    const loadEnvs = async () => {
-      const result = await envCheckAction()
+    checkEnvironmentVariables(requiredEnvs).then((result) => {
       setEnvs(result.envs)
       setAllValid(result.allValid)
-    }
-    loadEnvs()
+    })
   }, [])
 
   // Only show if in development and not all valid
@@ -81,7 +88,7 @@ export const SetupToolbar = ({ envCheckAction }: { envCheckAction: EnvCheckActio
           <AlertTriangle className="v0-w-4 v0-h-4 v0-text-amber-600" />
         </motion.div>
         <motion.span layoutId="title" className="v0-block v0-text-sm v0-text-amber-800">
-          Setup your store
+          {title}
         </motion.span>
       </motion.button>
 
@@ -105,7 +112,7 @@ export const SetupToolbar = ({ envCheckAction }: { envCheckAction: EnvCheckActio
                   <AlertTriangle className="v0-size-4 v0-text-amber-600" />
                 </motion.div>
                 <motion.span layoutId="title" className="v0-text-sm v0-font-semibold v0-text-amber-800">
-                  Setup your store
+                  {title}
                 </motion.span>
               </div>
               <button
@@ -125,9 +132,7 @@ export const SetupToolbar = ({ envCheckAction }: { envCheckAction: EnvCheckActio
               >
                 {/* Description */}
                 <div className="v0-flex v0-items-center v0-justify-between v0-flex-shrink-0 v0-gap-4 v0-px-3 v0-py-1.5 v0-border-b v0-bg-neutral-100 v0-border-neutral-200">
-                  <p className="v0-text-xs v0-text-balance v0-text-neutral-600">
-                    Configure the following environment variables to set up your Salesforce Commerce Cloud integration.
-                  </p>
+                  <p className="v0-text-xs v0-text-balance v0-text-neutral-600">{description}</p>
                   <div className="v0-flex v0-items-center v0-justify-center v0-shrink-0">
                     <div className="v0-relative v0-size-10">
                       {/* Background circle */}
