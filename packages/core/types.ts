@@ -8,3 +8,5 @@ export interface EnvCheckActionResult {
   envs: EnvCheckResult[]
   allValid: boolean
 }
+
+export type EnvCheckAction = () => Promise<EnvCheckActionResult>

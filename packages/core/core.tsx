@@ -4,9 +4,9 @@ import { AnimatePresence, motion } from 'motion/react'
 import { useEffect, useState, useRef } from 'react'
 import { AlertTriangle, X, Check } from './icons'
 import { cn } from './utils'
-import { EnvCheckActionResult, EnvCheckResult } from './types'
+import { EnvCheckAction, EnvCheckResult } from './types'
 
-export const SetupToolbar = ({ envCheckAction }: { envCheckAction: () => Promise<EnvCheckActionResult> }) => {
+export const SetupToolbar = ({ envCheckAction }: { envCheckAction: EnvCheckAction }) => {
   const [open, setOpen] = useState(false)
   const [formState, setFormState] = useState('idle')
   const [envs, setEnvs] = useState<EnvCheckResult[]>([])
