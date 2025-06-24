@@ -1,5 +1,3 @@
-'use client'
-
 import { AnimatePresence, motion } from 'motion/react'
 import { useEffect, useState, useRef } from 'react'
 import { AlertTriangle, X, Check } from './icons'
