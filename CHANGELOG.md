@@ -1,5 +1,11 @@
 # @joycostudio/v0-setup
 
+## 0.0.3
+
+### Patch Changes
+
+- 10cd5ac: add EnvCheckAction type
+
 ## 0.0.2
 
 ### Patch Changes
