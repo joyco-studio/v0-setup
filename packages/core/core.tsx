@@ -2,7 +2,7 @@ import { AnimatePresence, motion } from 'motion/react'
 import { useEffect, useState, useRef } from 'react'
 import { AlertTriangle, X, Check } from './icons'
 import { cn } from './utils'
-import { EnvCheckResult, VariableGroup } from './types'
+import { EnvCheckActionResult, EnvCheckResult, VariableGroup } from './types'
 import { checkEnvironmentVariables } from './actions'
 
 export const SetupToolbar = ({
@@ -47,7 +47,7 @@ export const SetupToolbar = ({
   }, [open, formState])
 
   useEffect(() => {
-    checkEnvironmentVariables(requiredEnvs).then((result) => {
+    checkEnvironmentVariables(requiredEnvs).then((result: EnvCheckActionResult) => {
       setEnvs(result.envs)
       setAllValid(result.allValid)
     })
