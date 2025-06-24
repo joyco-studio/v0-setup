@@ -1,4 +1,4 @@
-# v0-setup
+# @joycostudio/v0-setup
 
 ## 0.0.2
 

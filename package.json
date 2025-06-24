@@ -1,5 +1,5 @@
 {
-  "name": "v0-setup",
+  "name": "@joycostudio/v0-setup",
   "publishConfig": {
     "registry": "https://registry.npmjs.org",
     "access": "public"
