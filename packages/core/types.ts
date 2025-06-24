@@ -9,4 +9,11 @@ export interface EnvCheckActionResult {
   allValid: boolean
 }
 
+export type Variable = {
+  name: string
+  label: string
+}
+
+export type VariableGroup = Variable[]
+
 export type EnvCheckAction = () => Promise<EnvCheckActionResult>
