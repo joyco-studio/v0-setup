@@ -1,5 +1,11 @@
 # @joycostudio/v0-setup
 
+## 0.0.5
+
+### Patch Changes
+
+- 7ad591b: remove "use client"
+
 ## 0.0.4
 
 ### Patch Changes
