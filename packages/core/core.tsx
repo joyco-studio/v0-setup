@@ -2,18 +2,23 @@ import { AnimatePresence, motion } from 'motion/react'
 import { useEffect, useState, useRef } from 'react'
 import { AlertTriangle, X, Check } from './icons'
 import { cn } from './utils'
-import { EnvCheckActionResult, EnvCheckResult, VariableGroup } from './types'
+import { EnvCheckAction, EnvCheckActionResult, EnvCheckResult, VariableGroup } from './types'
 import { checkEnvironmentVariables } from './actions'
 
-export const SetupToolbar = ({
-  title,
-  description,
-  envs: requiredEnvs,
-}: {
+type SetupToolbarBaseProps = {
   title: string
   description: string
-  envs: VariableGroup
-}) => {
+}
+
+type SetupToolbarProps =
+  | (SetupToolbarBaseProps & {
+      envs: VariableGroup
+    })
+  | (SetupToolbarBaseProps & {
+      envCheckAction: EnvCheckAction
+    })
+
+export const SetupToolbar = ({ title, description, ...props }: SetupToolbarProps) => {
   const [open, setOpen] = useState(false)
   const [formState, setFormState] = useState('idle')
   const [envs, setEnvs] = useState<EnvCheckResult[]>([])
@@ -47,10 +52,17 @@ export const SetupToolbar = ({
   }, [open, formState])
 
   useEffect(() => {
-    checkEnvironmentVariables(requiredEnvs).then((result: EnvCheckActionResult) => {
-      setEnvs(result.envs)
-      setAllValid(result.allValid)
-    })
+    if ('envs' in props) {
+      checkEnvironmentVariables(props.envs).then((result: EnvCheckActionResult) => {
+        setEnvs(result.envs)
+        setAllValid(result.allValid)
+      })
+    } else {
+      props.envCheckAction().then((result: EnvCheckActionResult) => {
+        setEnvs(result.envs)
+        setAllValid(result.allValid)
+      })
+    }
   }, [])
 
   // Only show if in development and not all valid
