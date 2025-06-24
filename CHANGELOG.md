@@ -1,5 +1,11 @@
 # @joycostudio/v0-setup
 
+## 0.1.1
+
+### Patch Changes
+
+- 4e1c71f: allow both env list or envCheckAction fn
+
 ## 0.1.0
 
 ### Minor Changes
