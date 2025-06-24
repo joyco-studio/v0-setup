@@ -1,5 +1,11 @@
 # @joycostudio/v0-setup
 
+## 0.1.0
+
+### Minor Changes
+
+- 0231682: update toolbar props, and allow to set title and description
+
 ## 0.0.5
 
 ### Patch Changes
