@@ -73,8 +73,6 @@ const SetupToolbarInternal = ({ title, description, ...props }: SetupToolbarProp
     }
   }, [])
 
-  console.log('SetupToolbarInternal', { title, description, ...props, open, formState, envs, allValid })
-
   // Only show if in development and not all valid
   if (process.env.NODE_ENV === 'production' || allValid) {
     return null
@@ -237,19 +235,31 @@ export const SetupToolbar = (props: SetupToolbarProps) => {
   const [mountInstance, setMountInstance] = useState(false)
   const shadowHostRef = useRef<HTMLDivElement>(null)
   const reactRootRef = useRef<Root | null>(null)
+  const mountInstanceIdRef = useRef<string | null>(null)
 
   useEffect(() => {
     const w = window as any
+    const instanceId = Math.random().toString(36).substr(2, 9)
 
-    const alreadyMountedInstance = w[MOUNT_INSTANCE_KEY]
-    if (alreadyMountedInstance) return
+    // Check if there's already a mounted instance
+    const existingInstanceId = w[MOUNT_INSTANCE_KEY]
+    if (existingInstanceId && existingInstanceId !== mountInstanceIdRef.current) {
+      // Another instance is already mounted, don't mount this one
+      return
+    }
 
+    // Mark this instance as the mounted one
+    mountInstanceIdRef.current = instanceId
+    w[MOUNT_INSTANCE_KEY] = instanceId
     setMountInstance(true)
-    w[MOUNT_INSTANCE_KEY] = true
 
     return () => {
-      setMountInstance(false)
-      w[MOUNT_INSTANCE_KEY] = false
+      // Only clean up if this is still the active instance
+      if (w[MOUNT_INSTANCE_KEY] === instanceId) {
+        w[MOUNT_INSTANCE_KEY] = null
+        setMountInstance(false)
+      }
+      mountInstanceIdRef.current = null
     }
   }, [])
 
@@ -269,7 +279,23 @@ export const SetupToolbar = (props: SetupToolbarProps) => {
   useEffect(() => {
     if (!mountInstance || !shadowHostRef.current || !useShadowDOM) return
 
-    const shadowRoot = shadowHostRef.current.attachShadow({ mode: 'open' })
+    // Check if shadow root already exists
+    let shadowRoot = shadowHostRef.current.shadowRoot
+    if (!shadowRoot) {
+      try {
+        shadowRoot = shadowHostRef.current.attachShadow({ mode: 'open' })
+      } catch {
+        // Shadow root might already exist, try to get it
+        shadowRoot = shadowHostRef.current.shadowRoot
+        if (!shadowRoot) {
+          console.error('Failed to create or get shadow root')
+          return
+        }
+      }
+    }
+
+    // Clear existing content
+    shadowRoot.innerHTML = ''
 
     // Inject styles into shadow DOM
     const style = document.createElement('style')
@@ -281,6 +307,16 @@ export const SetupToolbar = (props: SetupToolbarProps) => {
     container.style.cssText = 'position: relative; z-index: 9999;'
     shadowRoot.appendChild(container)
 
+    // Clean up previous root if it exists
+    if (reactRootRef.current) {
+      try {
+        reactRootRef.current.unmount()
+      } catch {
+        // Ignore unmount errors
+      }
+      reactRootRef.current = null
+    }
+
     // Create React root and render
     const root = createRoot(container)
     reactRootRef.current = root
@@ -289,7 +325,11 @@ export const SetupToolbar = (props: SetupToolbarProps) => {
 
     return () => {
       if (reactRootRef.current) {
-        reactRootRef.current.unmount()
+        try {
+          reactRootRef.current.unmount()
+        } catch {
+          // Ignore unmount errors in cleanup
+        }
         reactRootRef.current = null
       }
     }
