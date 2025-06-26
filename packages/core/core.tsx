@@ -1,9 +1,12 @@
 import { AnimatePresence, motion } from 'motion/react'
 import { useEffect, useState, useRef } from 'react'
+import { createRoot } from 'react-dom/client'
+import type { Root } from 'react-dom/client'
 import { AlertTriangle, X, Check } from './icons'
 import { cn } from './utils'
 import { EnvCheckAction, EnvCheckActionResult, EnvCheckResult, VariableGroup } from './types'
 import { checkEnvironmentVariables } from './actions'
+import { CSS_CONTENT } from './styles'
 
 type SetupToolbarBaseProps = {
   title: string
@@ -18,7 +21,11 @@ type SetupToolbarProps =
       envCheckAction: EnvCheckAction
     })
 
-export const SetupToolbar = ({ title, description, ...props }: SetupToolbarProps) => {
+const SHADOW_HOST_ID = 'v0-setup-toolbar-shadow-host'
+const MOUNT_INSTANCE_KEY = '__V0_SETUP_TOOLBAR_MOUNTED__'
+
+// Internal component that will be rendered inside shadow DOM
+const SetupToolbarInternal = ({ title, description, ...props }: SetupToolbarProps) => {
   const [open, setOpen] = useState(false)
   const [formState, setFormState] = useState('idle')
   const [envs, setEnvs] = useState<EnvCheckResult[]>([])
@@ -75,15 +82,13 @@ export const SetupToolbar = ({ title, description, ...props }: SetupToolbarProps
   return (
     <div
       aria-hidden="true"
-      className={cn(
-        'v0-fixed v0-inset-0 v0-transition-colors v0-flex v0-items-end v0-justify-center v0-z-[9999] v0-p-4 v0-pointer-events-none'
-      )}
+      className={cn('fixed inset-0 transition-colors flex items-end justify-center z-[9999] p-4 pointer-events-none')}
     >
       <div
         onClick={() => setOpen(false)}
         className={cn(
-          'v0-absolute v0-inset-0 v0-transition-colors',
-          open ? 'v0-pointer-events-auto v0-bg-black/30' : 'v0-pointer-events-none'
+          'absolute inset-0 transition-colors',
+          open ? 'pointer-events-auto bg-black/30' : 'pointer-events-none'
         )}
       />
       <motion.button
@@ -93,13 +98,13 @@ export const SetupToolbar = ({ title, description, ...props }: SetupToolbarProps
           setFormState('idle')
         }}
         key="button"
-        className="v0-relative v0-flex v0-items-center v0-gap-2 v0-px-3 v0-font-medium v0-transition-colors v0-border v0-rounded-lg v0-shadow-sm v0-outline-none v0-pointer-events-auto v0-h-9 v0-border-amber-200 v0-bg-amber-50 v0-hover:v0-bg-amber-100"
+        className="relative flex items-center gap-2 px-3 font-medium transition-colors border rounded-lg shadow-sm outline-none pointer-events-auto h-9 border-amber-200 bg-amber-50 hover:bg-amber-100"
         style={{ borderRadius: 8 }}
       >
         <motion.div layoutId="icon">
-          <AlertTriangle className="v0-w-4 v0-h-4 v0-text-amber-600" />
+          <AlertTriangle className="w-4 h-4 text-amber-600" />
         </motion.div>
-        <motion.span layoutId="title" className="v0-block v0-text-sm v0-text-amber-800">
+        <motion.span layoutId="title" className="block text-sm text-amber-800">
           {title}
         </motion.span>
       </motion.button>
@@ -108,7 +113,7 @@ export const SetupToolbar = ({ title, description, ...props }: SetupToolbarProps
         {open ? (
           <motion.div
             layoutId="wrapper"
-            className="v0-pointer-events-auto v0-absolute v0-bottom-6 v0-w-[500px] v0-overflow-hidden v0-bg-neutral-100 v0-p-1 v0-outline-none v0-flex v0-flex-col"
+            className="pointer-events-auto absolute bottom-6 w-[500px] overflow-hidden bg-neutral-100 p-1 outline-none flex flex-col"
             ref={ref}
             style={{
               borderRadius: 12,
@@ -118,37 +123,37 @@ export const SetupToolbar = ({ title, description, ...props }: SetupToolbarProps
             }}
           >
             {/* Header with animated title and close button */}
-            <div className="v0-flex v0-items-center v0-justify-between v0-flex-shrink-0 v0-px-4 v0-py-3 v0-border-b v0-border-dashed v0-rounded-t-lg v0-bg-neutral-50 v0-border-neutral-200">
-              <div className="v0-flex v0-items-center v0-gap-2">
+            <div className="flex items-center justify-between flex-shrink-0 px-4 py-3 border-b border-dashed rounded-t-lg bg-neutral-50 border-neutral-200">
+              <div className="flex items-center gap-2">
                 <motion.div layoutId="icon">
-                  <AlertTriangle className="v0-size-4 v0-text-amber-600" />
+                  <AlertTriangle className="size-4 text-amber-600" />
                 </motion.div>
-                <motion.span layoutId="title" className="v0-text-sm v0-font-semibold v0-text-amber-800">
+                <motion.span layoutId="title" className="text-sm font-semibold text-amber-800">
                   {title}
                 </motion.span>
               </div>
               <button
                 onClick={() => setOpen(false)}
-                className="v0-p-1 v0-transition-colors v0-rounded v0-text-neutral-300 v0-hover:v0-text-neutral-600 v0-hover:v0-bg-neutral-100"
+                className="p-1 transition-colors rounded text-neutral-300 hover:text-neutral-600 hover:bg-neutral-100"
               >
-                <X className="v0-size-4" />
+                <X className="size-4" />
               </button>
             </div>
 
-            <div className="v0-flex v0-flex-col v0-flex-1 v0-min-h-0">
+            <div className="flex flex-col flex-1 min-h-0">
               <motion.div
                 exit={{ y: 8, opacity: 0 }}
                 transition={{ type: 'spring', duration: 0.25, bounce: 0 }}
                 key="content"
-                className="v0-flex v0-flex-col v0-flex-1 v0-min-h-0 v0-rounded-b-lg"
+                className="flex flex-col flex-1 min-h-0 rounded-b-lg"
               >
                 {/* Description */}
-                <div className="v0-flex v0-items-center v0-justify-between v0-flex-shrink-0 v0-gap-4 v0-px-3 v0-py-1.5 v0-border-b v0-bg-neutral-100 v0-border-neutral-200">
-                  <p className="v0-text-xs v0-text-balance v0-text-neutral-600">{description}</p>
-                  <div className="v0-flex v0-items-center v0-justify-center v0-shrink-0">
-                    <div className="v0-relative v0-size-10">
+                <div className="flex items-center justify-between flex-shrink-0 gap-4 px-3 py-1.5 border-b bg-neutral-100 border-neutral-200">
+                  <p className="text-xs text-balance text-neutral-600">{description}</p>
+                  <div className="flex items-center justify-center shrink-0">
+                    <div className="relative size-10">
                       {/* Background circle */}
-                      <svg className="v0-transform v0--rotate-90 v0-size-10" viewBox="0 0 32 32">
+                      <svg className="transform -rotate-90 size-10" viewBox="0 0 32 32">
                         <circle
                           cx="16"
                           cy="16"
@@ -156,7 +161,7 @@ export const SetupToolbar = ({ title, description, ...props }: SetupToolbarProps
                           stroke="currentColor"
                           strokeWidth="2"
                           fill="transparent"
-                          className="v0-text-neutral-300"
+                          className="text-neutral-300"
                         />
                         {/* Progress circle */}
                         <circle
@@ -168,15 +173,15 @@ export const SetupToolbar = ({ title, description, ...props }: SetupToolbarProps
                           fill="transparent"
                           strokeDasharray={`${2 * Math.PI * 12}`}
                           strokeDashoffset={`${2 * Math.PI * 12 * (1 - validCount / envs.length)}`}
-                          className={validCount === envs.length ? 'v0-text-green-500' : 'v0-text-amber-500'}
+                          className={validCount === envs.length ? 'text-green-500' : 'text-amber-500'}
                           style={{
                             transition: 'stroke-dashoffset 0.3s ease-in-out',
                           }}
                         />
                       </svg>
                       {/* Center text */}
-                      <div className="v0-absolute v0-inset-0 v0-flex v0-items-center v0-justify-center">
-                        <span className="v0-text-[10px] v0-font-semibold v0-text-neutral-700 v0-leading-none v0-tabular-nums">
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <span className="text-[10px] font-semibold text-neutral-700 leading-none tabular-nums">
                           {validCount}/{envs.length}
                         </span>
                       </div>
@@ -185,27 +190,25 @@ export const SetupToolbar = ({ title, description, ...props }: SetupToolbarProps
                 </div>
 
                 {/* Environment variables list */}
-                <div className="v0-flex-1 v0-overflow-y-auto v0-bg-white">
-                  <div className="v0-p-4 v0-pb-6 v0-space-y-3">
+                <div className="flex-1 overflow-y-auto bg-white">
+                  <div className="p-4 pb-6 space-y-3">
                     {envs.map((env) => (
                       <div
                         key={env.name}
-                        className="v0-flex v0-items-center v0-gap-3 v0-p-3 v0-border v0-rounded-lg v0-bg-neutral-50 v0-border-neutral-200"
+                        className="flex items-center gap-3 p-3 border rounded-lg bg-neutral-50 border-neutral-200"
                       >
                         <div
-                          className={`v0-flex-shrink-0 v0-size-8 v0-rounded-sm v0-flex v0-items-center v0-justify-center ${
-                            env.isValid ? 'v0-bg-green-100 v0-text-green-600' : 'v0-bg-amber-100 v0-text-amber-600'
+                          className={`flex-shrink-0 size-8 rounded-sm flex items-center justify-center ${
+                            env.isValid ? 'bg-green-100 text-green-600' : 'bg-amber-100 text-amber-600'
                           }`}
                         >
-                          {env.isValid ? <Check className="v0-size-4" /> : <AlertTriangle className="v0-size-4" />}
+                          {env.isValid ? <Check className="size-4" /> : <AlertTriangle className="size-4" />}
                         </div>
-                        <div className="v0-flex-1 v0-min-w-0">
-                          <div className="v0-text-sm v0-font-medium v0-text-neutral-900">{env.label}</div>
-                          <div className="v0-font-mono v0-text-xs v0-truncate v0-text-neutral-500">{env.name}</div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium text-neutral-900">{env.label}</div>
+                          <div className="font-mono text-xs truncate text-neutral-500">{env.name}</div>
                         </div>
-                        <div
-                          className={`v0-text-xs v0-font-medium ${env.isValid ? 'v0-text-green-600' : 'v0-text-amber-600'}`}
-                        >
+                        <div className={`text-xs font-medium ${env.isValid ? 'text-green-600' : 'text-amber-600'}`}>
                           {env.isValid ? 'Set' : 'Missing'}
                         </div>
                       </div>
@@ -218,5 +221,66 @@ export const SetupToolbar = ({ title, description, ...props }: SetupToolbarProps
         ) : null}
       </AnimatePresence>
     </div>
+  )
+}
+
+// Shadow DOM wrapper component
+export const SetupToolbar = (props: SetupToolbarProps) => {
+  const [mountInstance, setMountInstance] = useState(false)
+  const shadowHostRef = useRef<HTMLDivElement>(null)
+  const reactRootRef = useRef<Root | null>(null)
+
+  useEffect(() => {
+    const w = window as any
+
+    const alreadyMountedInstance = w[MOUNT_INSTANCE_KEY]
+    if (alreadyMountedInstance) return
+
+    setMountInstance(true)
+    w[MOUNT_INSTANCE_KEY] = true
+
+    return () => {
+      setMountInstance(false)
+      w[MOUNT_INSTANCE_KEY] = false
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!mountInstance || !shadowHostRef.current) return
+
+    const shadowRoot = shadowHostRef.current.attachShadow({ mode: 'open' })
+
+    // Inject styles into shadow DOM
+    const style = document.createElement('style')
+    style.textContent = CSS_CONTENT
+    shadowRoot.appendChild(style)
+
+    // Create container for React app
+    const container = document.createElement('div')
+    container.style.cssText = 'position: relative; z-index: 9999;'
+    shadowRoot.appendChild(container)
+
+    // Create React root and render
+    const root = createRoot(container)
+    reactRootRef.current = root
+
+    root.render(<SetupToolbarInternal {...props} />)
+
+    return () => {
+      if (reactRootRef.current) {
+        reactRootRef.current.unmount()
+        reactRootRef.current = null
+      }
+    }
+  }, [mountInstance, props])
+
+  if (!mountInstance) return null
+
+  return (
+    <div
+      ref={shadowHostRef}
+      id={SHADOW_HOST_ID}
+      style={{ position: 'fixed', top: 0, left: 0, pointerEvents: 'none', zIndex: 9999 }}
+    />
   )
 }
