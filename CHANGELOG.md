@@ -1,5 +1,11 @@
 # @joycostudio/v0-setup
 
+## 1.0.0
+
+### Major Changes
+
+- 683a992: release
+
 ## 0.2.1
 
 ### Patch Changes
