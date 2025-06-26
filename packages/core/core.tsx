@@ -73,6 +73,8 @@ const SetupToolbarInternal = ({ title, description, ...props }: SetupToolbarProp
     }
   }, [])
 
+  console.log('SetupToolbarInternal', { title, description, ...props, open, formState, envs, allValid })
+
   // Only show if in development and not all valid
   if (process.env.NODE_ENV === 'production' || allValid) {
     return null
