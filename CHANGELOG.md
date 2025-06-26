@@ -1,5 +1,11 @@
 # @joycostudio/v0-setup
 
+## 0.2.0
+
+### Minor Changes
+
+- 3bc94b1: migrate to shadow dom
+
 ## 0.1.1
 
 ### Patch Changes
