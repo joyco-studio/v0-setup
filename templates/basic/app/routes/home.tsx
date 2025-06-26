@@ -11,6 +11,7 @@ export default function Home() {
       <SetupToolbar
         title="Welcome to the Joyco Studio V0 Setup"
         description="This is a description"
+        useShadowDOM={false}
         envCheckAction={async () => {
           console.log('envCheckAction')
           return {
