@@ -1,5 +1,11 @@
 # @joycostudio/v0-setup
 
+## 0.2.1
+
+### Patch Changes
+
+- e07ba9e: allow shadow dom or not
+
 ## 0.2.0
 
 ### Minor Changes
