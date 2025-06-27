@@ -1,7 +1,5 @@
 import { AnimatePresence, motion } from 'motion/react'
 import { useEffect, useState, useRef } from 'react'
-import { createRoot } from 'react-dom/client'
-import type { Root } from 'react-dom/client'
 import { AlertTriangle, X, Check } from './icons'
 import { cn } from './utils'
 import { EnvCheckAction, EnvCheckActionResult, EnvCheckResult, VariableGroup } from './types'
@@ -22,7 +20,6 @@ type SetupToolbarProps =
       envCheckAction: EnvCheckAction
     })
 
-const SHADOW_HOST_ID = 'v0-setup-toolbar-shadow-host'
 const MOUNT_INSTANCE_KEY = '__V0_SETUP_TOOLBAR_MOUNTED__'
 
 // Internal component that will be rendered inside shadow DOM
@@ -216,12 +213,8 @@ const SetupToolbarInternal = ({ title, description, ...props }: SetupToolbarProp
   )
 }
 
-// Shadow DOM wrapper component
 export const SetupToolbar = (props: SetupToolbarProps) => {
-  const { useShadowDOM = true, ...restProps } = props
   const [mountInstance, setMountInstance] = useState(false)
-  const shadowHostRef = useRef<HTMLDivElement>(null)
-  const reactRootRef = useRef<Root | null>(null)
   const mountInstanceIdRef = useRef<string | null>(null)
 
   useEffect(() => {
@@ -253,7 +246,7 @@ export const SetupToolbar = (props: SetupToolbarProps) => {
   useEffect(() => {
     if (!mountInstance) return
 
-    // Always inject global styles into host DOM
+    // Inject global styles into host DOM
     const existingStyle = document.getElementById('v0-setup-toolbar-styles')
     if (!existingStyle) {
       const style = document.createElement('style')
@@ -263,77 +256,7 @@ export const SetupToolbar = (props: SetupToolbarProps) => {
     }
   }, [mountInstance])
 
-  useEffect(() => {
-    if (!mountInstance || !shadowHostRef.current || !useShadowDOM) return
-
-    // Check if shadow root already exists
-    let shadowRoot = shadowHostRef.current.shadowRoot
-    if (!shadowRoot) {
-      try {
-        shadowRoot = shadowHostRef.current.attachShadow({ mode: 'open' })
-      } catch {
-        // Shadow root might already exist, try to get it
-        shadowRoot = shadowHostRef.current.shadowRoot
-        if (!shadowRoot) {
-          console.error('Failed to create or get shadow root')
-          return
-        }
-      }
-    }
-
-    // Clear existing content
-    shadowRoot.innerHTML = ''
-
-    // Inject styles into shadow DOM
-    const style = document.createElement('style')
-    style.textContent = CSS_CONTENT
-    shadowRoot.appendChild(style)
-
-    // Create container for React app
-    const container = document.createElement('div')
-    container.style.cssText = 'position: relative; z-index: 9999;'
-    shadowRoot.appendChild(container)
-
-    // Clean up previous root if it exists
-    if (reactRootRef.current) {
-      try {
-        reactRootRef.current.unmount()
-      } catch {
-        // Ignore unmount errors
-      }
-      reactRootRef.current = null
-    }
-
-    // Create React root and render
-    const root = createRoot(container)
-    reactRootRef.current = root
-
-    root.render(<SetupToolbarInternal {...restProps} />)
-
-    return () => {
-      if (reactRootRef.current) {
-        try {
-          reactRootRef.current.unmount()
-        } catch {
-          // Ignore unmount errors in cleanup
-        }
-        reactRootRef.current = null
-      }
-    }
-  }, [mountInstance, useShadowDOM, restProps])
-
   if (!mountInstance) return null
 
-  // If not using shadow DOM, render directly
-  if (!useShadowDOM) {
-    return <SetupToolbarInternal {...restProps} />
-  }
-
-  return (
-    <div
-      ref={shadowHostRef}
-      id={SHADOW_HOST_ID}
-      style={{ position: 'fixed', top: 0, left: 0, pointerEvents: 'none', zIndex: 9999 }}
-    />
-  )
+  return <SetupToolbarInternal {...props} />
 }
