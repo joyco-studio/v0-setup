@@ -1,9 +1,8 @@
 'use server'
 
-import { EnvCheckResult, EnvCheckAction } from '@joycostudio/v0-setup'
-import { VariableGroup } from './types'
+import { VariableGroup, EnvCheckResult, EnvCheckActionResult } from './types'
 
-export const checkEnvironmentVariables: EnvCheckAction = async (variables: VariableGroup) => {
+export const checkEnvironmentVariables = async (variables: VariableGroup): Promise<EnvCheckActionResult> => {
   // Only check environment variables in development
   if (process.env.NODE_ENV === 'production') {
     return {

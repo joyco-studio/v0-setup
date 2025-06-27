@@ -28,53 +28,41 @@ const MOUNT_INSTANCE_KEY = '__V0_SETUP_TOOLBAR_MOUNTED__'
 // Internal component that will be rendered inside shadow DOM
 const SetupToolbarInternal = ({ title, description, ...props }: SetupToolbarProps) => {
   const [open, setOpen] = useState(false)
-  const [formState, setFormState] = useState('idle')
   const [envs, setEnvs] = useState<EnvCheckResult[]>([])
+  const [loading, setLoading] = useState(true)
   const [allValid, setAllValid] = useState(false)
   const ref = useRef(null)
-
-  function submit() {
-    setFormState('loading')
-    setTimeout(() => {
-      setFormState('success')
-    }, 1500)
-
-    setTimeout(() => {
-      setOpen(false)
-    }, 3300)
-  }
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         setOpen(false)
       }
-
-      if ((event.ctrlKey || event.metaKey) && event.key === 'Enter' && open && formState === 'idle') {
-        submit()
-      }
     }
 
     window.addEventListener('keydown', handleKeyDown)
+
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [open, formState])
+  }, [])
 
   useEffect(() => {
+    setLoading(true)
     if ('envs' in props) {
       checkEnvironmentVariables(props.envs).then((result: EnvCheckActionResult) => {
         setEnvs(result.envs)
         setAllValid(result.allValid)
+        setLoading(false)
       })
     } else {
       props.envCheckAction().then((result: EnvCheckActionResult) => {
         setEnvs(result.envs)
         setAllValid(result.allValid)
+        setLoading(false)
       })
     }
   }, [])
 
-  // Only show if in development and not all valid
-  if (process.env.NODE_ENV === 'production' || allValid) {
+  if (loading || allValid) {
     return null
   }
 
@@ -98,7 +86,6 @@ const SetupToolbarInternal = ({ title, description, ...props }: SetupToolbarProp
         layoutId="wrapper"
         onClick={() => {
           setOpen(true)
-          setFormState('idle')
         }}
         key="button"
         className="v0-relative v0-flex v0-items-center v0-gap-2 v0-px-3 v0-font-medium v0-transition-colors v0-border v0-rounded-lg v0-shadow-sm v0-outline-none v0-pointer-events-auto v0-h-9 v0-border-amber-200 v0-bg-amber-50 v0-hover:v0-bg-amber-100"
