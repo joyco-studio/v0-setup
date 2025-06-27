@@ -9,7 +9,6 @@ import { CSS_CONTENT } from './styles'
 type SetupToolbarBaseProps = {
   title: string
   description: string
-  useShadowDOM?: boolean
 }
 
 type SetupToolbarProps =
