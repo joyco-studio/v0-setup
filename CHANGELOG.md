@@ -1,5 +1,11 @@
 # @joycostudio/v0-setup
 
+## 1.0.2
+
+### Patch Changes
+
+- 65705d3: simplify mount logic
+
 ## 1.0.1
 
 ### Patch Changes
