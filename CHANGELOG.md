@@ -1,5 +1,12 @@
 # @joycostudio/v0-setup
 
+## 1.0.1
+
+### Patch Changes
+
+- 88b5051: log
+- 8cacb32: fix strict mode?
+
 ## 1.0.0
 
 ### Major Changes
