@@ -196,7 +196,7 @@ const SetupToolbarInternal = ({ title, description, ...props }: SetupToolbarProp
                             {env.isValid ? 'Set' : 'Missing'}
                           </div>
                         </div>
-                        {env.script?.content && (
+                        {env.script?.content && !env.isValid && (
                           <div className="v0-relative v0-mt-4">
                             {/* Copy button */}
                             <button
