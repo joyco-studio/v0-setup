@@ -1,7 +1,11 @@
 import { AnimatePresence, motion } from 'motion/react'
 import { useEffect, useState, useRef } from 'react'
-import { AlertTriangle, X, Check } from './icons'
-import { cn } from './utils'
+import { createRoot, Root } from 'react-dom/client'
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
+import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
+
+import { AlertTriangle, X, Check, Copy } from './icons'
+import { cn, copy, normalizeIndentation } from './utils'
 import { EnvCheckAction, EnvCheckActionResult, EnvCheckResult, VariableGroup } from './types'
 import { checkEnvironmentVariables } from './actions'
 import { CSS_CONTENT } from './styles'
@@ -27,6 +31,7 @@ const SetupToolbarInternal = ({ title, description, ...props }: SetupToolbarProp
   const [envs, setEnvs] = useState<EnvCheckResult[]>([])
   const [loading, setLoading] = useState(true)
   const [allValid, setAllValid] = useState(false)
+  const [copiedScript, setCopiedScript] = useState<string | null>(null)
   const ref = useRef(null)
 
   useEffect(() => {
@@ -40,6 +45,12 @@ const SetupToolbarInternal = ({ title, description, ...props }: SetupToolbarProp
 
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [])
+
+  const handleCopyScript = async (content: string, scriptId: string) => {
+    await copy(content)
+    setCopiedScript(scriptId)
+    setTimeout(() => setCopiedScript(null), 2000)
+  }
 
   useEffect(() => {
     setLoading(true)
@@ -78,22 +89,6 @@ const SetupToolbarInternal = ({ title, description, ...props }: SetupToolbarProp
           open ? 'v0-pointer-events-auto v0-bg-black/30' : 'v0-pointer-events-none'
         )}
       />
-      <motion.button
-        layoutId="wrapper"
-        onClick={() => {
-          setOpen(true)
-        }}
-        key="button"
-        className="v0-relative v0-flex v0-items-center v0-gap-2 v0-px-3 v0-font-medium v0-transition-colors v0-border v0-rounded-lg v0-shadow-sm v0-outline-none v0-pointer-events-auto v0-h-9 v0-border-amber-200 v0-bg-amber-50 v0-hover:v0-bg-amber-100"
-        style={{ borderRadius: 8 }}
-      >
-        <motion.div layoutId="icon">
-          <AlertTriangle className="v0-w-4 v0-h-4 v0-text-amber-600" />
-        </motion.div>
-        <motion.span layoutId="title" className="v0-block v0-text-sm v0-text-amber-800">
-          {title}
-        </motion.span>
-      </motion.button>
 
       <AnimatePresence>
         {open ? (
@@ -181,24 +176,55 @@ const SetupToolbarInternal = ({ title, description, ...props }: SetupToolbarProp
                     {envs.map((env) => (
                       <div
                         key={env.name}
-                        className="v0-flex v0-items-center v0-gap-3 v0-p-3 v0-border v0-rounded-lg v0-bg-neutral-50 v0-border-neutral-200"
+                        className=" v0-p-3 v0-border v0-rounded-lg v0-bg-neutral-50 v0-border-neutral-200"
                       >
-                        <div
-                          className={`v0-flex-shrink-0 v0-size-8 v0-rounded-sm v0-flex v0-items-center v0-justify-center ${
-                            env.isValid ? 'v0-bg-green-100 v0-text-green-600' : 'v0-bg-amber-100 v0-text-amber-600'
-                          }`}
-                        >
-                          {env.isValid ? <Check className="v0-size-4" /> : <AlertTriangle className="v0-size-4" />}
+                        <div className="v0-flex v0-items-center v0-gap-3">
+                          <div
+                            className={`v0-flex-shrink-0 v0-size-8 v0-rounded-sm v0-flex v0-items-center v0-justify-center ${
+                              env.isValid ? 'v0-bg-green-100 v0-text-green-600' : 'v0-bg-amber-100 v0-text-amber-600'
+                            }`}
+                          >
+                            {env.isValid ? <Check className="v0-size-4" /> : <AlertTriangle className="v0-size-4" />}
+                          </div>
+                          <div className="v0-flex-1 v0-min-w-0">
+                            <div className="v0-text-sm v0-font-medium v0-text-neutral-900">{env.label}</div>
+                            <div className="v0-font-mono v0-text-xs v0-truncate v0-text-neutral-500">{env.name}</div>
+                          </div>
+                          <div
+                            className={`v0-text-xs v0-font-medium ${env.isValid ? 'v0-text-green-600' : 'v0-text-amber-600'}`}
+                          >
+                            {env.isValid ? 'Set' : 'Missing'}
+                          </div>
                         </div>
-                        <div className="v0-flex-1 v0-min-w-0">
-                          <div className="v0-text-sm v0-font-medium v0-text-neutral-900">{env.label}</div>
-                          <div className="v0-font-mono v0-text-xs v0-truncate v0-text-neutral-500">{env.name}</div>
-                        </div>
-                        <div
-                          className={`v0-text-xs v0-font-medium ${env.isValid ? 'v0-text-green-600' : 'v0-text-amber-600'}`}
-                        >
-                          {env.isValid ? 'Set' : 'Missing'}
-                        </div>
+                        {env.script?.content && !env.isValid && (
+                          <div className="v0-relative v0-mt-4">
+                            {/* Copy button */}
+                            <button
+                              onClick={() => handleCopyScript(env.script!.content, env.name)}
+                              className="v0-absolute v0-top-2 v0-right-2 v0-z-10 v0-p-2 v0-rounded v0-bg-neutral-800 v0-hover:v0-bg-neutral-700 v0-transition-colors v0-text-neutral-300 v0-hover:v0-text-white"
+                              title="Copy code"
+                            >
+                              {copiedScript === env.name ? (
+                                <Check className="v0-size-4" />
+                              ) : (
+                                <Copy className="v0-size-4" />
+                              )}
+                            </button>
+                            {/* @ts-expect-error - TODO: fix this */}
+                            <SyntaxHighlighter
+                              language={env.script.language.toLowerCase()}
+                              style={oneDark}
+                              customStyle={{
+                                margin: 0,
+                                padding: '12px',
+                                fontSize: '11px',
+                                scrollbarWidth: 'none',
+                              }}
+                            >
+                              {normalizeIndentation(env.script.content)}
+                            </SyntaxHighlighter>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -206,14 +232,33 @@ const SetupToolbarInternal = ({ title, description, ...props }: SetupToolbarProp
               </motion.div>
             </div>
           </motion.div>
-        ) : null}
+        ) : (
+          <motion.button
+            layoutId="wrapper"
+            onClick={() => {
+              setOpen(true)
+            }}
+            key="button"
+            className="v0-relative v0-flex v0-items-center v0-gap-2 v0-px-3 v0-font-medium v0-transition-colors v0-border v0-rounded-lg v0-shadow-sm v0-outline-none v0-pointer-events-auto v0-h-9 v0-border-amber-200 v0-bg-amber-50 v0-hover:v0-bg-amber-100"
+            style={{ borderRadius: 8 }}
+          >
+            <motion.div layoutId="icon">
+              <AlertTriangle className="v0-w-4 v0-h-4 v0-text-amber-600" />
+            </motion.div>
+            <motion.span layoutId="title" className="v0-block v0-text-sm v0-text-amber-800">
+              {title}
+            </motion.span>
+          </motion.button>
+        )}
       </AnimatePresence>
     </div>
   )
 }
 
 export const SetupToolbar = (props: SetupToolbarProps) => {
-  const [mountInstance, setMountInstance] = useState(false)
+  const shadowHostRef = useRef<HTMLDivElement | null>(null)
+  const shadowRootRef = useRef<ShadowRoot | null>(null)
+  const reactRootRef = useRef<Root | null>(null)
   const mountInstanceIdRef = useRef<string | null>(null)
 
   useEffect(() => {
@@ -230,32 +275,65 @@ export const SetupToolbar = (props: SetupToolbarProps) => {
     // Mark this instance as the mounted one
     mountInstanceIdRef.current = instanceId
     w[MOUNT_INSTANCE_KEY] = instanceId
-    setMountInstance(true)
+
+    // Create shadow host element
+    const shadowHost = document.createElement('div')
+    shadowHost.style.cssText =
+      'position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999;'
+    shadowHostRef.current = shadowHost
+
+    // Create shadow root
+    const shadowRoot = shadowHost.attachShadow({ mode: 'open' })
+    shadowRootRef.current = shadowRoot
+
+    // Inject styles into shadow DOM
+    const styleElement = document.createElement('style')
+    styleElement.textContent = CSS_CONTENT
+    shadowRoot.appendChild(styleElement)
+
+    // Create container for React content
+    const reactContainer = document.createElement('div')
+    reactContainer.style.cssText = 'width: 100%; height: 100%;'
+    shadowRoot.appendChild(reactContainer)
+
+    // Create React root and render
+    const reactRoot = createRoot(reactContainer)
+    reactRootRef.current = reactRoot
+    reactRoot.render(<SetupToolbarInternal {...props} />)
+
+    // Append to document body
+    document.body.appendChild(shadowHost)
 
     return () => {
       // Only clean up if this is still the active instance
       if (w[MOUNT_INSTANCE_KEY] === instanceId) {
         w[MOUNT_INSTANCE_KEY] = null
-        setMountInstance(false)
+
+        // Cleanup React root
+        if (reactRootRef.current) {
+          reactRootRef.current.unmount()
+          reactRootRef.current = null
+        }
+
+        // Remove shadow host from DOM
+        if (shadowHostRef.current && shadowHostRef.current.parentNode) {
+          shadowHostRef.current.parentNode.removeChild(shadowHostRef.current)
+        }
+
+        shadowHostRef.current = null
+        shadowRootRef.current = null
       }
       mountInstanceIdRef.current = null
     }
   }, [])
 
+  // Update the React component when props change
   useEffect(() => {
-    if (!mountInstance) return
-
-    // Inject global styles into host DOM
-    const existingStyle = document.getElementById('v0-setup-toolbar-styles')
-    if (!existingStyle) {
-      const style = document.createElement('style')
-      style.id = 'v0-setup-toolbar-styles'
-      style.textContent = CSS_CONTENT
-      document.head.appendChild(style)
+    if (reactRootRef.current) {
+      reactRootRef.current.render(<SetupToolbarInternal {...props} />)
     }
-  }, [mountInstance])
+  }, [props])
 
-  if (!mountInstance) return null
-
-  return <SetupToolbarInternal {...props} />
+  // This component doesn't render anything directly - everything is rendered in shadow DOM
+  return null
 }

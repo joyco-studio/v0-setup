@@ -21,7 +21,7 @@
   },
   "scripts": {
     "build": "tsup",
-    "dev": "concurrently \"tsup --watch\" \"ENVIRONMENT=development cd templates/basic && pnpm dev\"",
+    "dev": "concurrently \"tsup --watch\" \"ENVIRONMENT=development cd templates/next && pnpm dev\"",
     "typecheck": "tsc --noEmit",
     "version:package": "pnpm changeset version",
     "release": "pnpm build && pnpm changeset publish",
@@ -35,6 +35,7 @@
     "@types/node": "^20.11.24",
     "@types/react": "^18.2.61",
     "@types/react-dom": "^19.1.6",
+    "@types/react-syntax-highlighter": "^15.5.13",
     "@typescript-eslint/eslint-plugin": "^8.21.0",
     "@typescript-eslint/parser": "^8.21.0",
     "autoprefixer": "^10.4.20",
@@ -60,6 +61,8 @@
   "dependencies": {
     "clsx": "^2.1.1",
     "motion": "^12.19.1",
+    "prismjs": "^1.29.0",
+    "react-syntax-highlighter": "^15.5.0",
     "tailwind-merge": "^3.3.1"
   }
 }
