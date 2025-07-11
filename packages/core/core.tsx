@@ -1,5 +1,6 @@
 import { AnimatePresence, motion } from 'motion/react'
 import { useEffect, useState, useRef } from 'react'
+import { createRoot, Root } from 'react-dom/client'
 import { AlertTriangle, X, Check } from './icons'
 import { cn } from './utils'
 import { EnvCheckAction, EnvCheckActionResult, EnvCheckResult, VariableGroup } from './types'
@@ -213,7 +214,9 @@ const SetupToolbarInternal = ({ title, description, ...props }: SetupToolbarProp
 }
 
 export const SetupToolbar = (props: SetupToolbarProps) => {
-  const [mountInstance, setMountInstance] = useState(false)
+  const shadowHostRef = useRef<HTMLDivElement | null>(null)
+  const shadowRootRef = useRef<ShadowRoot | null>(null)
+  const reactRootRef = useRef<Root | null>(null)
   const mountInstanceIdRef = useRef<string | null>(null)
 
   useEffect(() => {
@@ -230,32 +233,65 @@ export const SetupToolbar = (props: SetupToolbarProps) => {
     // Mark this instance as the mounted one
     mountInstanceIdRef.current = instanceId
     w[MOUNT_INSTANCE_KEY] = instanceId
-    setMountInstance(true)
+
+    // Create shadow host element
+    const shadowHost = document.createElement('div')
+    shadowHost.style.cssText =
+      'position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999;'
+    shadowHostRef.current = shadowHost
+
+    // Create shadow root
+    const shadowRoot = shadowHost.attachShadow({ mode: 'open' })
+    shadowRootRef.current = shadowRoot
+
+    // Inject styles into shadow DOM
+    const styleElement = document.createElement('style')
+    styleElement.textContent = CSS_CONTENT
+    shadowRoot.appendChild(styleElement)
+
+    // Create container for React content
+    const reactContainer = document.createElement('div')
+    reactContainer.style.cssText = 'width: 100%; height: 100%;'
+    shadowRoot.appendChild(reactContainer)
+
+    // Create React root and render
+    const reactRoot = createRoot(reactContainer)
+    reactRootRef.current = reactRoot
+    reactRoot.render(<SetupToolbarInternal {...props} />)
+
+    // Append to document body
+    document.body.appendChild(shadowHost)
 
     return () => {
       // Only clean up if this is still the active instance
       if (w[MOUNT_INSTANCE_KEY] === instanceId) {
         w[MOUNT_INSTANCE_KEY] = null
-        setMountInstance(false)
+
+        // Cleanup React root
+        if (reactRootRef.current) {
+          reactRootRef.current.unmount()
+          reactRootRef.current = null
+        }
+
+        // Remove shadow host from DOM
+        if (shadowHostRef.current && shadowHostRef.current.parentNode) {
+          shadowHostRef.current.parentNode.removeChild(shadowHostRef.current)
+        }
+
+        shadowHostRef.current = null
+        shadowRootRef.current = null
       }
       mountInstanceIdRef.current = null
     }
   }, [])
 
+  // Update the React component when props change
   useEffect(() => {
-    if (!mountInstance) return
-
-    // Inject global styles into host DOM
-    const existingStyle = document.getElementById('v0-setup-toolbar-styles')
-    if (!existingStyle) {
-      const style = document.createElement('style')
-      style.id = 'v0-setup-toolbar-styles'
-      style.textContent = CSS_CONTENT
-      document.head.appendChild(style)
+    if (reactRootRef.current) {
+      reactRootRef.current.render(<SetupToolbarInternal {...props} />)
     }
-  }, [mountInstance])
+  }, [props])
 
-  if (!mountInstance) return null
-
-  return <SetupToolbarInternal {...props} />
+  // This component doesn't render anything directly - everything is rendered in shadow DOM
+  return null
 }
