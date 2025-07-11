@@ -1,6 +1,10 @@
 export type Variable = {
   name: string
   label: string
+  script?: {
+    language: string
+    content: string
+  }
 }
 
 export type VariableGroup = Variable[]
