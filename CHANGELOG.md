@@ -1,5 +1,11 @@
 # @joycostudio/v0-setup
 
+## 1.1.0
+
+### Minor Changes
+
+- d7cb3af: use shadowdom again
+
 ## 1.0.2
 
 ### Patch Changes
