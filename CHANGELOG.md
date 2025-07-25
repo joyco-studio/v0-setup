@@ -1,5 +1,11 @@
 # @joycostudio/v0-setup
 
+## 1.1.1
+
+### Patch Changes
+
+- 6d791cb: change shadow dom approach
+
 ## 1.1.0
 
 ### Minor Changes
