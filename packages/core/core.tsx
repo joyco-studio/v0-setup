@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from 'motion/react'
 import { useEffect, useState, useRef } from 'react'
-import { createRoot, Root } from 'react-dom/client'
+import { createPortal } from 'react-dom'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
 
@@ -22,8 +22,6 @@ type SetupToolbarProps =
   | (SetupToolbarBaseProps & {
       envCheckAction: EnvCheckAction
     })
-
-const MOUNT_INSTANCE_KEY = '__V0_SETUP_TOOLBAR_MOUNTED__'
 
 // Internal component that will be rendered inside shadow DOM
 const SetupToolbarInternal = ({ title, description, ...props }: SetupToolbarProps) => {
@@ -255,11 +253,14 @@ const SetupToolbarInternal = ({ title, description, ...props }: SetupToolbarProp
   )
 }
 
+const MOUNT_INSTANCE_KEY = '__V0_SETUP_TOOLBAR_MOUNTED__'
+
 export const SetupToolbar = (props: SetupToolbarProps) => {
   const shadowHostRef = useRef<HTMLDivElement | null>(null)
   const shadowRootRef = useRef<ShadowRoot | null>(null)
-  const reactRootRef = useRef<Root | null>(null)
+  const portalContainerRef = useRef<HTMLDivElement | null>(null)
   const mountInstanceIdRef = useRef<string | null>(null)
+  const [portalContainer, setPortalContainer] = useState<HTMLDivElement | null>(null)
 
   useEffect(() => {
     const w = window as any
@@ -291,15 +292,12 @@ export const SetupToolbar = (props: SetupToolbarProps) => {
     styleElement.textContent = CSS_CONTENT
     shadowRoot.appendChild(styleElement)
 
-    // Create container for React content
-    const reactContainer = document.createElement('div')
-    reactContainer.style.cssText = 'width: 100%; height: 100%;'
-    shadowRoot.appendChild(reactContainer)
-
-    // Create React root and render
-    const reactRoot = createRoot(reactContainer)
-    reactRootRef.current = reactRoot
-    reactRoot.render(<SetupToolbarInternal {...props} />)
+    // Create container for React portal
+    const portalContainerElement = document.createElement('div')
+    portalContainerElement.style.cssText = 'width: 100%; height: 100%;'
+    portalContainerRef.current = portalContainerElement
+    shadowRoot.appendChild(portalContainerElement)
+    setPortalContainer(portalContainerElement)
 
     // Append to document body
     document.body.appendChild(shadowHost)
@@ -309,31 +307,20 @@ export const SetupToolbar = (props: SetupToolbarProps) => {
       if (w[MOUNT_INSTANCE_KEY] === instanceId) {
         w[MOUNT_INSTANCE_KEY] = null
 
-        // Cleanup React root
-        if (reactRootRef.current) {
-          reactRootRef.current.unmount()
-          reactRootRef.current = null
-        }
-
-        // Remove shadow host from DOM
+        // Clean DOM elements
         if (shadowHostRef.current && shadowHostRef.current.parentNode) {
           shadowHostRef.current.parentNode.removeChild(shadowHostRef.current)
         }
 
         shadowHostRef.current = null
         shadowRootRef.current = null
+        portalContainerRef.current = null
+        setPortalContainer(null)
       }
       mountInstanceIdRef.current = null
     }
   }, [])
 
-  // Update the React component when props change
-  useEffect(() => {
-    if (reactRootRef.current) {
-      reactRootRef.current.render(<SetupToolbarInternal {...props} />)
-    }
-  }, [props])
-
-  // This component doesn't render anything directly - everything is rendered in shadow DOM
-  return null
+  // Render using React Portal - no separate React root needed!
+  return portalContainer ? createPortal(<SetupToolbarInternal {...props} />, portalContainer) : null
 }
