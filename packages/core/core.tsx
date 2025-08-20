@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'motion/react'
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
@@ -13,6 +13,7 @@ import { CSS_CONTENT } from './styles'
 type SetupToolbarBaseProps = {
   title: string
   description: string
+  addon?: Record<string /* Matches the env name */, React.ReactNode>
 }
 
 type SetupToolbarProps =
@@ -24,7 +25,7 @@ type SetupToolbarProps =
     })
 
 // Internal component that will be rendered inside shadow DOM
-const SetupToolbarInternal = ({ title, description, ...props }: SetupToolbarProps) => {
+const SetupToolbarInternal = ({ title, description, addon = {}, ...props }: SetupToolbarProps) => {
   const [open, setOpen] = useState(false)
   const [envs, setEnvs] = useState<EnvCheckResult[]>([])
   const [loading, setLoading] = useState(true)
@@ -50,18 +51,23 @@ const SetupToolbarInternal = ({ title, description, ...props }: SetupToolbarProp
     setTimeout(() => setCopiedScript(null), 2000)
   }
 
+  const checkAllValid = useCallback((envs: EnvCheckResult[]) => {
+    return envs.every((env) => env.isValid)
+  }, [])
+
   useEffect(() => {
     setLoading(true)
+
     if ('envs' in props) {
       checkEnvironmentVariables(props.envs).then((result: EnvCheckActionResult) => {
         setEnvs(result.envs)
-        setAllValid(result.allValid)
+        setAllValid(checkAllValid(result.envs))
         setLoading(false)
       })
     } else {
       props.envCheckAction().then((result: EnvCheckActionResult) => {
         setEnvs(result.envs)
-        setAllValid(result.allValid)
+        setAllValid(checkAllValid(result.envs))
         setLoading(false)
       })
     }
@@ -223,6 +229,7 @@ const SetupToolbarInternal = ({ title, description, ...props }: SetupToolbarProp
                             </SyntaxHighlighter>
                           </div>
                         )}
+                        {addon[env.name] != undefined ? addon[env.name] : null}
                       </div>
                     ))}
                   </div>
