@@ -7,7 +7,40 @@ export default function Setup() {
     <SetupToolbar
       title="Welcome to the Joyco Studio V0 Setupa"
       description="This is a description"
-      useShadowDOM={false}
+      addon={{
+        TEST: (
+          <>
+            <style>
+              {
+                /* css */ `
+                .v0-setup-toolbar-addon-button {
+                  background: #EAEAEA;
+                  border: 1px solid #00000050;
+                  margin-top: 16px;
+                  width: 100%;
+                  height: 36px;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  padding: 0 12px;
+                  border-radius: 6px;
+                  color: black;
+                  font-weight: semibold;
+                  font-size: 14px;
+                }
+
+                .v0-setup-toolbar-addon-button:hover {
+                  background: #dedede;
+                }
+              `
+              }
+            </style>
+            <a href="https://joyco.studio" className="v0-setup-toolbar-addon-button" target="_blank" rel="noreferrer">
+              Create a playground
+            </a>
+          </>
+        ),
+      }}
       envCheckAction={async () => {
         return {
           envs: [
@@ -54,9 +87,9 @@ export default function Setup() {
                   CREATE INDEX IF NOT EXISTS idx_form_submissions_email ON form_submissions(email);
                 `,
               },
+              isValid: false,
             },
           ],
-          allValid: false,
         }
       }}
     />
