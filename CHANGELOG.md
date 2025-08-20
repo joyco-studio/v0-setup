@@ -1,5 +1,11 @@
 # @joycostudio/v0-setup
 
+## 1.1.2
+
+### Patch Changes
+
+- 0bd5c8c: add addon
+
 ## 1.1.1
 
 ### Patch Changes
