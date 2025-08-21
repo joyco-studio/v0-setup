@@ -98,7 +98,7 @@ const SetupToolbarInternal = ({ title, description, addon = {}, ...props }: Setu
         {open ? (
           <motion.div
             layoutId="wrapper"
-            className="v0-pointer-events-auto v0-absolute v0-bottom-6 v0-w-[500px] v0-overflow-hidden v0-bg-neutral-100 v0-p-1 v0-outline-none v0-flex v0-flex-col"
+            className="v0-pointer-events-auto v0-max-w-[90%] v0-absolute v0-bottom-6 v0-w-[500px] v0-overflow-hidden v0-bg-neutral-100 v0-p-1 v0-outline-none v0-flex v0-flex-col"
             ref={ref}
             style={{
               borderRadius: 12,
