@@ -1,5 +1,11 @@
 # @joycostudio/v0-setup
 
+## 1.1.3
+
+### Patch Changes
+
+- b205f2d: fix max-w
+
 ## 1.1.2
 
 ### Patch Changes
